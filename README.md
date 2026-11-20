@@ -1,4 +1,4 @@
-<p align="center"> <img src="sitio/logo.svg" alt="Ruta Local" height="80"> </p>
+<p align="left"> <img src="sitio/logo.svg" alt="Ruta Local" height="80"> </p>
 
 # Ruta Local · Catálogo digital
 
