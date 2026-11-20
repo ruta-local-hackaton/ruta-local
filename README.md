@@ -13,7 +13,7 @@ Este repositorio publica el catálogo de experiencias de Ruta Local en **una sol
  
 El catálogo circulaba como archivos por correo y WhatsApp. Había varias versiones, nadie sabía cuál era la vigente y no existía forma de recuperar una versión anterior después de un error.
  
-## La solución en una frase
+## Propuesta de solución
  
 El sitio vive en este repositorio, se publica con **GitHub Pages**, cada cambio pasa por un **pull request** aprobado por la coordinación, **GitHub Actions** valida y publica automáticamente, y cada versión oficial queda guardada como **release** con un zip de respaldo.
  
