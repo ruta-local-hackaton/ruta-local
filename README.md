@@ -1,6 +1,5 @@
 <p align="left"> <img src="sitio/logo.svg" alt="Ruta Local" height="80"> </p>
 
-# Ruta Local · Catálogo digital
 
 > **Caso simulado.** Ruta Local S.A.S. es una organización ficticia creada para el Reto EstudIA (Nube e infraestructura · Capa 2). Todo el contenido es ficticio y no contiene datos personales, credenciales ni información de clientes.
  
