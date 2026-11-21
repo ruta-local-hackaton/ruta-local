@@ -1,0 +1,96 @@
+# Publica el sitio en GitHub Pages cada vez que se hace push a main.
+# También permite volver a una versión anterior desde la pestaña Actions
+# (botón "Run workflow" → escribir el tag, por ejemplo v1).
+#
+# Requisitos:
+#   - Los archivos del sitio van en la carpeta sitio/
+#   - Settings → Pages → Source: "GitHub Actions"
+#   - Opcional: si el HTML tiene {{VERSION}} o {{FECHA}}, se reemplazan solos
+
+name: Publicar sitio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag o commit a publicar (ej. v1). Vacío = lo último de main"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - name: Descargar el código (versión elegida)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version || github.sha }}
+          fetch-depth: 0 # necesario para leer los tags
+
+      # ---------- 1. Validaciones: si algo falla, NO se publica ----------
+
+      - name: Verificar que existe index.html
+        run: test -f sitio/index.html || (echo "Falta sitio/index.html" && exit 1)
+
+      - name: Validar HTML
+        run: npx --yes htmlhint "sitio/**/*.html"
+
+      - name: Revisar enlaces rotos internos
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress "sitio/**/*.html"
+          fail: true
+
+      # ---------- 2. Sello de versión automático ----------
+
+      - name: Escribir versión y fecha en el sitio
+        run: |
+          VERSION=$(git describe --tags --always)
+          FECHA=$(TZ=America/Bogota date +"%Y-%m-%d %H:%M")
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          find sitio -name "*.html" -exec sed -i "s/{{VERSION}}/$VERSION/g; s/{{FECHA}}/$FECHA/g" {} +
+          echo "$VERSION" > sitio/version.txt
+          echo "Publicando versión $VERSION ($FECHA)"
+
+      # ---------- 3. Publicación ----------
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: sitio
+
+      - name: Publicar en GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      # ---------- 4. Prueba de humo: ¿quedó publicada la versión correcta? ----------
+
+      - name: Comprobar que el sitio responde con la versión esperada
+        run: |
+          URL="${{ steps.deploy.outputs.page_url }}version.txt"
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsSL "$URL?t=$(date +%s)" | grep -qx "$VERSION"; then
+              echo "OK: $URL muestra $VERSION"
+              exit 0
+            fi
+            echo "Intento $i: aún no se ve $VERSION, esperando..."
+            sleep 15
+          done
+          echo "El sitio no muestra la versión $VERSION"
+          exit 1
