@@ -1,0 +1,29 @@
+# Cuando se publica una Release desde GitHub (Releases → Draft a new release),
+# genera un .zip del sitio de esa versión y lo adjunta a la Release.
+# Así cada versión oficial queda con un respaldo descargable.
+
+name: Respaldo por versión
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  respaldo:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Comprimir el sitio
+        run: zip -r "ruta-local-${TAG}.zip" sitio
+
+      - name: Adjuntar el respaldo a la Release
+        run: gh release upload "$TAG" "ruta-local-${TAG}.zip" --clobber
