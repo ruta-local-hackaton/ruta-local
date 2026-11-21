@@ -1,0 +1,30 @@
+# Corre las validaciones en cada pull request hacia main.
+# Si falla, el PR queda marcado en rojo y (con la regla de protección
+# de la rama) no se puede hacer merge.
+
+name: Validar cambios
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar que existe index.html
+        run: test -f sitio/index.html || (echo "Falta sitio/index.html" && exit 1)
+
+      - name: Validar HTML
+        run: npx --yes htmlhint "sitio/**/*.html"
+
+      - name: Revisar enlaces rotos internos
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress "sitio/**/*.html"
+          fail: true
