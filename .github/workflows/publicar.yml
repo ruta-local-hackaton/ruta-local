@@ -29,20 +29,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publicar:
+  # ---------- Trabajo 1: revisar y empaquetar el sitio ----------
+  construir:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
+    outputs:
+      version: ${{ steps.sello.outputs.version }}
     steps:
       - name: Descargar el código (versión elegida)
         uses: actions/checkout@v4
         with:
           ref: ${{ inputs.version || github.sha }}
           fetch-depth: 0 # necesario para leer los tags
-
-      # ---------- 1. Validaciones: si algo falla, NO se publica ----------
 
       - name: Verificar que existe index.html
         run: test -f sitio/index.html || (echo "Falta sitio/index.html" && exit 1)
@@ -56,32 +53,38 @@ jobs:
           args: --offline --no-progress "sitio/**/*.html"
           fail: true
 
-      # ---------- 2. Sello de versión automático ----------
-
       - name: Escribir versión y fecha en el sitio
+        id: sello
         run: |
           VERSION=$(git describe --tags --always)
           FECHA=$(TZ=America/Bogota date +"%Y-%m-%d %H:%M")
-          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           find sitio -name "*.html" -exec sed -i "s/{{VERSION}}/$VERSION/g; s/{{FECHA}}/$FECHA/g" {} +
           echo "$VERSION" > sitio/version.txt
-          echo "Publicando versión $VERSION ($FECHA)"
-
-      # ---------- 3. Publicación ----------
+          echo "Empaquetando versión $VERSION ($FECHA)"
 
       - uses: actions/configure-pages@v5
 
-      - uses: actions/upload-pages-artifact@v3
+      - name: Empaquetar el sitio para Pages
+        uses: actions/upload-pages-artifact@v4
         with:
           path: sitio
 
+  # ---------- Trabajo 2: publicar y comprobar ----------
+  publicar:
+    needs: construir
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - name: Publicar en GitHub Pages
         id: deploy
         uses: actions/deploy-pages@v4
 
-      # ---------- 4. Prueba de humo: ¿quedó publicada la versión correcta? ----------
-
       - name: Comprobar que el sitio responde con la versión esperada
+        env:
+          VERSION: ${{ needs.construir.outputs.version }}
         run: |
           URL="${{ steps.deploy.outputs.page_url }}version.txt"
           for i in 1 2 3 4 5 6 7 8 9 10; do
