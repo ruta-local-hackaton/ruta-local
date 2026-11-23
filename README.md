@@ -108,13 +108,4 @@ Después de restaurar, verifica en una ventana de incógnito que el pie de pági
 | Documentador | Bitácora, evidencias y runbooks |
 | Comunicador | Presentación y pruebas como visitante |
  
-## Estado
- 
-- [ ] v1 publicada
-- [ ] Workflows funcionando
-- [ ] Reglas de protección de `main` activas
-- [ ] v2 publicada mediante pull request
-- [ ] Restauración probada y documentada en la bitácora
-      
-Al terminar el reto, el repositorio se archivará y GitHub Pages se desactivará, como indican las condiciones de uso.
  
