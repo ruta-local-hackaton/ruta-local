@@ -1,29 +1,62 @@
-# Cuando se publica una Release desde GitHub (Releases → Draft a new release),
-# genera un .zip del sitio de esa versión y lo adjunta a la Release.
-# Así cada versión oficial queda con un respaldo descargable.
+# Cuando se publica una Release (Releases → Draft a new release):
+#   1. genera un .zip del sitio de esa versión,
+#   2. lo adjunta a la Release en GitHub,
+#   3. copia el mismo .zip a la carpeta de respaldo independiente
+#      (Google Drive u OneDrive) usando rclone.
+#
+# También se puede correr a mano desde Actions → "Respaldo por versión"
+# → Run workflow → escribir el tag (ej. v2), por ejemplo para probarlo.
+#
+# Requisito: el secret RCLONE_CONF (Settings → Secrets and variables → Actions)
+# con la configuración de rclone. El remoto debe llamarse "respaldo".
 
 name: Respaldo por versión
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de la release a respaldar (ej. v2)"
+        required: true
 
 permissions:
   contents: write
+
+env:
+  CARPETA_RESPALDO: "Ruta Local - Respaldos"
 
 jobs:
   respaldo:
     runs-on: ubuntu-latest
     env:
-      TAG: ${{ github.event.release.tag_name }}
+      TAG: ${{ inputs.tag || github.event.release.tag_name }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
 
       - name: Comprimir el sitio
         run: zip -r "ruta-local-${TAG}.zip" sitio
 
       - name: Adjuntar el respaldo a la Release
         run: gh release upload "$TAG" "ruta-local-${TAG}.zip" --clobber
+
+      - name: Instalar rclone
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq rclone
+
+      - name: Copiar el respaldo a la carpeta independiente
+        env:
+          RCLONE_CONF: ${{ secrets.RCLONE_CONF }}
+        run: |
+          if [ -z "$RCLONE_CONF" ]; then
+            echo "Falta el secret RCLONE_CONF: el zip quedó en la Release, pero no se copió a la carpeta independiente."
+            exit 1
+          fi
+          mkdir -p ~/.config/rclone
+          printf '%s\n' "$RCLONE_CONF" > ~/.config/rclone/rclone.conf
+          rclone copy "ruta-local-${TAG}.zip" "respaldo:${CARPETA_RESPALDO}"
+          echo "Contenido de la carpeta de respaldo:"
+          rclone lsl "respaldo:${CARPETA_RESPALDO}"
