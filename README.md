@@ -4,6 +4,8 @@
 > **Caso simulado.** Ruta Local S.A.S. es una organización ficticia creada para el Reto EstudIA (Nube e infraestructura · Capa 2). Todo el contenido es ficticio y no contiene datos personales, credenciales ni información de clientes.
  
 Este repositorio publica el catálogo de experiencias de Ruta Local en **una sola dirección estable**, con control de versiones, aprobación de cambios y respaldo recuperable.
+
+**Registro de evidencias:** [Equipo Cloudy](Registro_evidencias.md).
  
 **Sitio publicado:** 
 
