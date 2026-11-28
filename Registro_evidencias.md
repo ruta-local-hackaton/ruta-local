@@ -8,11 +8,10 @@ Equipo: Cloudy
 
 Integrantes y responsabilidades:
 
-- Jahleel Areiza: Comunicador. Auxiliar: también aprueba cambios.
+- Jahleel Areiza: Comunicador. Documentador: también aprueba cambios.
 - Matteo Rodríguez: Diseñador
-- David Delgado: Documentador
 - Catalina Maya: Coordinadora. Owner de la organización y code owner.
-- Samuel Villalba: Investigador
+- Diego Ardila Sanchez: Investigador
 
 Fecha: 21 de noviembre de 2026
 
